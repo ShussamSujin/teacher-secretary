@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자율/진로활동 특기사항 작성 비서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ec4899; /* Matching pink for loader */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .bookmark-btn.bookmarked .fa-star {
+            color: #f59e0b; /* A warm yellow */
+        }
+        .memo-textarea {
+            resize: vertical;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-rose-100 to-pink-200">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 md:p-8">
+            <header class="text-center mb-8 relative">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">자율, 진로 특기사항 작성 비서</h1>
+                <p class="text-gray-500 mt-2">학생의 활동 내용을 입력하면 AI가 특기사항 예시를 생성해 드립니다.</p>
+                <button id="toggle-bookmarks-btn" class="absolute top-0 right-0 bg-amber-400 text-white py-2 px-4 rounded-lg font-bold hover:bg-amber-500 transition-all shadow-sm">
+                    <i class="fas fa-bookmark"></i> 북마크 모음
+                </button>
+            </header>
+            
+            <!-- 북마크 섹션 -->
+            <div id="bookmark-section" class="hidden mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">북마크 모음</h2>
+                <div id="bookmark-list-container" class="bg-rose-50/50 p-4 rounded-lg">
+                    <div id="bookmark-loader" class="text-center py-4">
+                        <div class="loader mx-auto"></div>
+                        <p class="mt-2 text-gray-600">북마크를 불러오는 중입니다...</p>
+                    </div>
+                    <ul id="bookmark-list" class="space-y-4 hidden">
+                        <!-- 북마크된 항목이 여기에 추가됩니다. -->
+                    </ul>
+                     <p id="no-bookmarks-msg" class="text-gray-500 text-center py-4 hidden">아직 북마크한 항목이 없습니다.</p>
+                </div>
+            </div>
+
+
+            <main>
+                <div class="space-y-6">
+                    <!-- 활동 선택 -->
+                    <div>
+                        <label for="activity-type" class="block text-lg font-medium text-gray-700 mb-2">1. 활동 유형 선택</label>
+                        <select id="activity-type" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition">
+                            <option value="" disabled selected>-- 아래에서 활동을 선택하세요 --</option>
+                            <optgroup label="자율활동">
+                                <option value="안전교육">안전교육</option>
+                                <option value="약물오남용예방교육">약물오남용예방교육</option>
+                                <option value="생명존중자살예방교육">생명존중자살예방교육</option>
+                                <option value="학급자치">학급자치</option>
+                                <option value="학교폭력예방교육">학교폭력예방교육</option>
+                                <option value="장애이해교육">장애이해교육</option>
+                                <option value="성폭력예방교육">성폭력예방교육</option>
+                                <option value="정보통신윤리교육">정보통신윤리교육</option>
+                                <option value="가정폭력/아동학대예방교육">가정폭력/아동학대예방교육</option>
+                                <option value="도박예방교육">도박예방교육</option>
+                                <option value="흡연예방교육">흡연예방교육</option>
+                            </optgroup>
+                            <optgroup label="진로활동">
+                                <option value="진로검사 및 해석">진로검사 및 해석</option>
+                                <option value="진로체험">진로체험</option>
+                                <option value="교과연계진로체험">교과연계진로체험</option>
+                                <option value="수련활동">수련활동</option>
+                                <option value="소규모테마형교육여행">소규모테마형교육여행</option>
+                                <option value="진로독서">진로독서</option>
+                            </optgroup>
+                             <option value="custom">직접 입력</option>
+                        </select>
+                    </div>
+
+                    <!-- 직접 입력 필드 -->
+                    <div id="custom-activity-wrapper" class="hidden">
+                        <label for="custom-activity-input" class="block text-lg font-medium text-gray-700 mb-2">활동 유형 직접 입력</label>
+                        <input type="text" id="custom-activity-input" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition" placeholder="예: 봉사활동, 동아리활동 등">
+                    </div>
+
+
+                    <!-- 활동 내용 입력 -->
+                    <div>
+                        <label for="activity-description" class="block text-lg font-medium text-gray-700 mb-2">2. 학생 활동 내용 입력</label>
+                        <textarea id="activity-description" rows="6" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition" placeholder="예시) 학교폭력예방교육에서 UCC 제작에 참여하여 따돌림 문제의 심각성을 알리는 시나리오를 작성함. 학급 자치 시간에 캠페인 활동을 제안하여 학급 친구들의 참여를 이끌어냄."></textarea>
+                    </div>
+
+                    <!-- 생성 버튼 -->
+                    <button id="generate-btn" class="w-full bg-pink-500 text-white py-3 px-6 rounded-lg text-lg font-bold hover:bg-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-300 transition-transform transform hover:scale-105 shadow-md">
+                        AI로 특기사항 생성하기
+                    </button>
+                </div>
+
+                <!-- 결과 표시 -->
+                <div id="result-section" class="mt-10 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">AI 생성 결과</h2>
+                    <p class="text-sm text-green-600 font-medium mb-4">[맞춤법 검사가 완료되었습니다]</p>
+                    <div id="loader" class="mx-auto my-8 loader hidden"></div>
+                    <ul id="result-list" class="space-y-3">
+                        <!-- 생성된 결과가 여기에 추가됩니다. -->
+                    </ul>
+                </div>
+            </main>
+        </div>
+        <footer class="text-center mt-8 text-gray-600 text-sm">
+            <p>© 2025 Lee Sujin(Google Certified Trainer & Innovator). All rights reserved.</p>
+            <p>문의: gajungssamzzang@gmail.com</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        // Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // ===================================================================================
+        // 선생님의 Firebase 설정 정보가 여기에 포함되었습니다.
+        // ===================================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdF-IdFsyKtJDIGHLD6IYgLa7Edsxt2GA",
+            authDomain: "yonggang-training-board.firebaseapp.com",
+            projectId: "yonggang-training-board",
+            storageBucket: "yonggang-training-board.appspot.com",
+            messagingSenderId: "870506401032",
+            appId: "1:870506401032:web:5652040999647b499570bd",
+            measurementId: "G-9LS23G8MNC"
+        };
+        // ===================================================================================
+
+        // DOM 요소
+        const generateBtn = document.getElementById('generate-btn');
+        const activityTypeSelect = document.getElementById('activity-type');
+        const customActivityWrapper = document.getElementById('custom-activity-wrapper');
+        const customActivityInput = document.getElementById('custom-activity-input');
+        const activityDescriptionTextarea = document.getElementById('activity-description');
+        const resultSection = document.getElementById('result-section');
+        const resultList = document.getElementById('result-list');
+        const loader = document.getElementById('loader');
+        
+        const toggleBookmarksBtn = document.getElementById('toggle-bookmarks-btn');
+        const bookmarkSection = document.getElementById('bookmark-section');
+        const bookmarkList = document.getElementById('bookmark-list');
+        const noBookmarksMsg = document.getElementById('no-bookmarks-msg');
+        const bookmarkLoader = document.getElementById('bookmark-loader');
+
+        // Firebase 관련 전역 변수
+        let bookmarks = [];
+        let currentUser = null;
+        let bookmarksDocRef = null;
+        let unsubscribeBookmarks = null;
+
+        // Firebase 초기화 및 기능 활성화 함수
+        function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+
+                // 인증 상태 변경 감지
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        currentUser = user;
+                        bookmarksDocRef = doc(db, "users", currentUser.uid);
+
+                        if (unsubscribeBookmarks) unsubscribeBookmarks();
+
+                        unsubscribeBookmarks = onSnapshot(bookmarksDocRef, (doc) => {
+                            bookmarks = doc.exists() ? doc.data().bookmarks || [] : [];
+                            renderBookmarks();
+                        }, (error) => {
+                            console.error("데이터 불러오기 실패:", error);
+                            bookmarkLoader.textContent = "데이터를 불러올 수 없습니다.";
+                        });
+                    } else {
+                        currentUser = null;
+                        bookmarks = [];
+                        if (unsubscribeBookmarks) unsubscribeBookmarks();
+                        renderBookmarks();
+                    }
+                });
+
+                signInAnonymously(auth).catch((error) => {
+                    console.error("익명 로그인 실패:", error);
+                    alert("Firebase 인증에 실패했습니다. 인터넷 연결 및 Firebase 설정을 확인해주세요.");
+                });
+
+            } catch (error) {
+                console.error("Firebase 초기화 오류:", error);
+                alert("Firebase를 초기화하는 데 실패했습니다. firebaseConfig가 올바른지 확인해주세요.");
+            }
+        }
+
+        // --- 북마크 관련 함수들 ---
+        const renderBookmarks = () => {
+            bookmarkLoader.classList.add('hidden');
+            bookmarkList.innerHTML = '';
+            if (bookmarks.length === 0) {
+                noBookmarksMsg.classList.remove('hidden');
+                bookmarkList.classList.add('hidden');
+            } else {
+                noBookmarksMsg.classList.add('hidden');
+                bookmarkList.classList.remove('hidden');
+                bookmarks.forEach((bookmark, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-white p-4 rounded-lg shadow-sm';
+                    li.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <p class="flex-grow mr-4 text-gray-800">${bookmark.fullText}</p>
+                            <div class="flex-shrink-0 flex items-center space-x-2">
+                                <button data-action="copy" data-text="${bookmark.fullText.replace(/"/g, '&quot;')}" class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-pink-200 transition-colors">복사</button>
+                                <button data-action="delete" data-index="${index}" class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-red-200 transition-colors">삭제</button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div id="memo-display-${index}" class="${bookmark.memo ? '' : 'hidden'}">
+                                <p class="text-sm text-gray-600 bg-white border border-gray-200 p-2 rounded">${bookmark.memo}</p>
+                                <button data-action="toggle-memo" data-index="${index}" class="text-xs text-pink-500 hover:underline mt-1">메모 수정</button>
+                            </div>
+                            <div id="memo-edit-${index}" class="${bookmark.memo ? 'hidden' : ''}">
+                                <textarea id="memo-input-${index}" class="w-full p-2 border border-gray-300 rounded-md text-sm memo-textarea" placeholder="여기에 메모를 입력하세요...">${bookmark.memo}</textarea>
+                                <div class="text-right mt-1">
+                                    <button data-action="save-memo" data-index="${index}" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-green-600">메모 저장</button>
+                                    ${bookmark.memo ? `<button data-action="toggle-memo" data-index="${index}" class="text-xs text-gray-500 hover:underline ml-2">취소</button>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                    bookmarkList.appendChild(li);
+                });
+            }
+            renderResultList();
+        };
+
+        const saveBookmarksToDb = async () => {
+            if (!bookmarksDocRef) return;
+            try {
+                await setDoc(bookmarksDocRef, { bookmarks: bookmarks });
+            } catch (error) {
+                console.error("북마크 저장 실패:", error);
+            }
+        };
+        
+        const copyText = (text, element) => {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            const originalText = element.textContent;
+            element.textContent = '복사 완료!';
+            element.classList.replace('bg-pink-100', 'bg-green-100');
+            element.classList.replace('text-pink-800', 'text-green-800');
+            setTimeout(() => {
+                element.textContent = originalText;
+                element.classList.replace('bg-green-100', 'bg-pink-100');
+                element.classList.replace('text-green-800', 'text-pink-800');
+            }, 1500);
+        };
+
+        const renderResultList = () => {
+            const items = resultList.querySelectorAll('li');
+            items.forEach(li => {
+                const textSpan = li.querySelector('span');
+                if (!textSpan) return;
+                const fullComment = textSpan.dataset.fullComment;
+                const bookmarkBtn = li.querySelector('.bookmark-btn');
+                if (bookmarks.some(b => b.fullText === fullComment)) {
+                    bookmarkBtn.classList.add('bookmarked');
+                } else {
+                    bookmarkBtn.classList.remove('bookmarked');
+                }
+            });
+        };
+
+        // --- 이벤트 리스너 설정 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+
+            toggleBookmarksBtn.addEventListener('click', () => {
+                bookmarkSection.classList.toggle('hidden');
+            });
+
+            activityTypeSelect.addEventListener('change', () => {
+                customActivityWrapper.classList.toggle('hidden', activityTypeSelect.value !== 'custom');
+            });
+            
+            bookmarkList.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+                const action = target.dataset.action;
+                const index = parseInt(target.dataset.index, 10);
+
+                if (action === 'copy') copyText(target.dataset.text, target);
+                else if (action === 'delete') {
+                    bookmarks.splice(index, 1);
+                    saveBookmarksToDb();
+                } else if (action === 'toggle-memo') {
+                    document.getElementById(`memo-display-${index}`).classList.toggle('hidden');
+                    document.getElementById(`memo-edit-${index}`).classList.toggle('hidden');
+                } else if (action === 'save-memo') {
+                    const memoInput = document.getElementById(`memo-input-${index}`);
+                    bookmarks[index].memo = memoInput.value.trim();
+                    saveBookmarksToDb();
+                }
+            });
+
+            resultList.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+                const action = target.dataset.action;
+                const fullComment = target.dataset.text;
+
+                if (action === 'copy') copyText(fullComment, target);
+                else if (action === 'bookmark') {
+                    const index = bookmarks.findIndex(b => b.fullText === fullComment);
+                    if (index > -1) bookmarks.splice(index, 1);
+                    else bookmarks.push({ fullText: fullComment, memo: '' });
+                    saveBookmarksToDb();
+                }
+            });
+
+            generateBtn.addEventListener('click', async () => {
+                let activityType = activityTypeSelect.value === 'custom'
+                    ? customActivityInput.value.trim()
+                    : activityTypeSelect.value;
+                const description = activityDescriptionTextarea.value.trim();
+
+                if (!activityType || !description) {
+                    alert('활동 유형을 선택(또는 입력)하고, 학생 활동 내용을 입력해주세요.');
+                    return;
+                }
+
+                resultSection.classList.remove('hidden');
+                resultList.innerHTML = '';
+                loader.classList.remove('hidden');
+
+                try {
+                    const prompt = `
+                        당신은 한국 고등학교 교사를 위한 학생부 기록 전문 AI 조수입니다. 아래 정보를 바탕으로, 학생의 자율활동 또는 진로활동 특기사항을 15가지 버전으로 생성해주세요.
+                        **활동 유형:** ${activityType}
+                        **학생의 핵심 활동 내용:** ${description}
+                        **생성 규칙 (매우 중요):**
+                        1. **개조식 서술 엄수 (가장 중요):** 모든 문장은 반드시 명사형 어미인 **'-함', '-음'** 또는 관찰형 서술인 **'-는 모습을 보임', '-는 태도가 돋보임', '-역량을 갖춤'** 등으로 끝나야 합니다. **'-습니다', '-ㅂ니다', '-보였습니다', '-나타냈습니다', '-했음', '-였음'과 같은 과거형 또는 종결형 어미는 절대 사용하지 않습니다.**
+                        2. **관점 유지:** 모든 문장은 교사가 학생을 '관찰한 사실'을 서술하는 방식이어야 합니다. '기여하는 모습을 보여줌', '협력하는 태도가 돋보임'과 같이 관찰자의 시점을 명확히 드러내야 합니다.
+                        3. **문장 시작 다양화:** 각 문장은 반드시 '${activityType}'으로 시작해야 합니다. 단, 문장의 시작 부분을 문맥에 맞게 다양하게 작성해주세요. (예: '${activityType}에서', '${activityType}을 통해', '${activityType} 시간에', '${activityType}과 관련하여', '${activityType}에 대한' 등)
+                        4. **금지 표현:** 학생의 내면을 직접적으로 단정하는 표현('--을 이해함', '--을 깨달음', '--을 느낌', '--계기가 됨', '--성장함')은 절대 사용하지 않습니다. 대신, '깨닫는 모습을 관찰함', '성장하는 계기로 삼는 태도를 보임' 과 같이 관찰한 내용으로 바꾸어 표현해야 합니다.
+                        5. **분량:** 각 버전은 2~3개의 문장을 자연스럽게 연결하여 구체적인 사례와 관찰 내용을 입체적으로 서술해야 합니다.
+                        6. **독창성:** 15개의 각 버전은 서로 다른 뉘앙스, 문장 구조, 강조점을 담아 독창적으로 표현해야 합니다.
+                        7. **완성도:** 모든 문장은 맞춤법과 문법이 완벽해야 합니다.
+                        8. **출력 형식:** 반드시 JSON 형식으로 응답해야 하며, 'comments'라는 키를 가진 문자열 배열을 포함해야 합니다. 예시: {"comments": ["${activityType}에서 ...하는 모습을 보임.", "${activityType}을 통해 ... 역량을 발휘하는 태도가 돋보임.", ...]}
+                    `;
+
+                    let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                    const payload = { 
+                        contents: chatHistory,
+                        generationConfig: { responseMimeType: "application/json" }
+                    };
+                    const apiKey = ""; // API 키는 비워두세요.
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API 요청 실패: ${response.statusText}`);
+                    const result = await response.json();
+                    
+                    let comments = [];
+                    if (result.candidates?.[0]?.content?.parts?.[0]) {
+                        comments = JSON.parse(result.candidates[0].content.parts[0].text).comments || [];
+                    } else {
+                        throw new Error("AI로부터 유효한 응답을 받지 못했습니다.");
+                    }
+
+                    loader.classList.add('hidden');
+                    if (comments.length === 0) {
+                        resultList.innerHTML = '<li class="text-gray-500">결과를 생성하지 못했습니다. 내용을 조금 더 자세히 작성해보세요.</li>';
+                        return;
+                    }
+
+                    comments.forEach(comment => {
+                        const li = document.createElement('li');
+                        li.className = 'bg-white p-4 rounded-lg flex justify-between items-center transition-all duration-300 hover:bg-rose-50 hover:shadow-sm';
+                        li.innerHTML = `
+                            <span class="flex-grow mr-4 text-gray-800" data-full-comment="${comment}">${comment}</span>
+                            <div class="flex-shrink-0 flex items-center space-x-2">
+                                <button class="bookmark-btn text-gray-400 hover:text-amber-400 text-xl transition-colors" data-action="bookmark" data-text="${comment.replace(/"/g, '&quot;')}"><i class="fas fa-star"></i></button>
+                                <button class="bg-pink-100 text-pink-800 px-4 py-1 rounded-full text-sm font-semibold hover:bg-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-colors" data-action="copy" data-text="${comment.replace(/"/g, '&quot;')}">복사</button>
+                            </div>`;
+                        resultList.appendChild(li);
+                    });
+                    renderResultList();
+
+                } catch (error) {
+                    console.error('오류 발생:', error);
+                    loader.classList.add('hidden');
+                    resultList.innerHTML = `<li class="text-red-500">오류가 발생했습니다: ${error.message}</li>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
