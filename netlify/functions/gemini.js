@@ -16,7 +16,7 @@ exports.handler = async function (event) {
     const body = JSON.parse(event.body);
 
     // Google AI API에 요청 보내기 (네이티브 fetch 사용)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
