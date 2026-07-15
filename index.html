@@ -542,9 +542,13 @@
                     `;
 
                     let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                    const payload = { 
+                    const payload = {
                         contents: chatHistory,
-                        generationConfig: { responseMimeType: "application/json" }
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            // 생각(thinking) 기능 끄기: 정형화된 문구 생성에는 불필요하며, 응답 속도를 크게 개선함
+                            thinkingConfig: { thinkingBudget: 0 }
+                        }
                     };
                     
                     // ===================================================================================
